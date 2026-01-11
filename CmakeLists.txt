@@ -1,0 +1,60 @@
+cmake_minimum_required(VERSION 3.20)
+project(sdl_demo LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
+#####################################################
+
+add_library(RenderLib 
+    src/triangle.cpp
+    src/square.cpp
+    src/camera.cpp
+    src/renderer.cpp
+    src/rubiks_cube.cpp)
+target_include_directories(RenderLib
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+        "C:/Users/nived/Desktop/cpp/usr/libraries/eigen"
+        "C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/include"
+)
+target_link_directories(RenderLib
+    PUBLIC
+        "C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/lib"
+)
+target_link_libraries(RenderLib PRIVATE SDL3)
+
+add_executable(test bin/test.cpp)
+target_link_libraries(test PRIVATE RenderLib)
+
+add_custom_command(TARGET test POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/bin/SDL3.dll
+        $<TARGET_FILE_DIR:test>
+)
+
+#####################################################
+
+
+add_executable(sdl_demo bin/main.cpp)
+
+target_include_directories(sdl_demo
+    PRIVATE
+        "C:/Users/nived/Desktop/cpp/usr/libraries/eigen"
+        "C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/include"
+)
+
+target_link_directories(sdl_demo
+    PRIVATE
+        "C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/lib"
+)
+
+target_link_libraries(sdl_demo PRIVATE SDL3)
+
+add_custom_command(TARGET sdl_demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/bin/SDL3.dll
+        $<TARGET_FILE_DIR:sdl_demo>
+)
