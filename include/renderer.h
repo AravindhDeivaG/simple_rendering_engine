@@ -7,6 +7,7 @@
 #include <vector>
 #include <math.h>
 #include <chrono>
+#include <string>
 
 
 struct Color
@@ -40,11 +41,22 @@ class Renderer
     }
 
     /**
+     * @brief Function to save the current rendered image
+     */
+    void saveImage(std::string);
+
+    /**
      * @brief function to clear the window
      */
     void clearWindow();
 
     private :
+
+    /**
+     * @brief window size
+     */
+    int size_x_, size_y_;
+
     /**
      * @brief SDL window object
      */

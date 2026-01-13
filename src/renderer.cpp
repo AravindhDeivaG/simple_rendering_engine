@@ -1,7 +1,9 @@
 #include "renderer.h"
 
 Renderer::Renderer(int size_x, int size_y) : 
-    depth_buffer_(size_x, size_y)
+    depth_buffer_(size_x, size_y),
+    size_x_(size_x),
+    size_y_(size_y)
 {
     // Connect to display driver
     SDL_Init(SDL_INIT_VIDEO);
@@ -69,6 +71,14 @@ void Renderer::renderTriangle(Eigen::Matrix<double,2,-1>& pixels,
             }
         }
     }
+}
+
+
+void Renderer::saveImage(std::string name)
+{
+    SDL_Surface* surface = SDL_RenderReadPixels(renderer_,nullptr);
+    SDL_SavePNG(surface, name.c_str());
+    SDL_DestroySurface(surface);
 }
 
 

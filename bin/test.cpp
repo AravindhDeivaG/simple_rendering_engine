@@ -35,6 +35,34 @@ Pose cameraPose(double r, double theta, double phi)
 }
 
 
+Pose interpolatePose(Pose p, Pose q, double t)
+{
+    Pose out;
+
+    // Perform linear interpolation of position
+    out.position = p.position*(1-t) + q.position*t;
+
+    // Perform slerp for orientation
+    double theta = std::acos(p.orientation.dot(q.orientation));
+    out.orientation = (p.orientation.coeffs()*std::sin((1-t)*theta) + 
+                       q.orientation.coeffs()*std::sin(t*theta)) / std::sin(theta);
+
+    return out;
+}
+
+
+int numDigits(int num)
+{
+    int dig=0;
+    while(num!=0)
+    {
+        num/=10;
+        dig++;
+    }
+    return dig;
+}
+
+
 int main()
 {
     Renderer renderer;
@@ -43,87 +71,45 @@ int main()
     RubiksCube cube;
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
+    Orientation o1, o2, o3;
+
     Pose p;
     p.position.setZero();
-    p.orientation.x() = 0;
-    p.orientation.y() = 0;
-    p.orientation.z() = std::sin(0*M_PI/360);
-    p.orientation.w() = std::cos(0*M_PI/360);
-    cube.setWorldPose(p);
+    
+    p.orientation.setIdentity();
+    p.position(1) = -4;
+    o1.x() = 0; o1.y() = 0; o1.z() = std::sin(-20*M_PI/360); o1.w() = std::cos(-20*M_PI/360);
+    p.orientation = o1;
 
-    SDL_Event e;
-    double theta=30, phi=45;
-    camera.setCameraPose(cameraPose(6,theta*M_PI/180,phi*M_PI/180));
-    cube.renderObject(camera,renderer);
-    renderer.show();
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    bool exit=false;
-    while (!exit) {
-        SDL_PollEvent(&e);
-        if (e.type == SDL_EVENT_KEY_DOWN) {
-            if(e.key.scancode == SDL_SCANCODE_UP)
-            {
-                theta = std::min((theta+5),60.0);
-            }
-            else if(e.key.scancode == SDL_SCANCODE_DOWN)
-            {
-                theta = std::max((theta-5),-60.0);
-            }
-            else if(e.key.scancode == SDL_SCANCODE_LEFT)
-            {
-                phi = (((phi-5)/360) - std::floor((phi-5)/360))*360;
-            }
-            else if(e.key.scancode == SDL_SCANCODE_RIGHT)
-            {
-                phi = ( ((phi+5)/360) - std::floor((phi+5)/360) )*360;
-            }
-            else if(e.key.scancode == SDL_SCANCODE_ESCAPE)
-            {
-                exit = true;
-            }
+    Pose q;
+    q.position.setZero();
+    q.position(1) = 4;
+    o1.setIdentity();
+    o2.setIdentity();
+    o1.x() = 0; o1.y() = 0; o1.z() = std::sin(90*M_PI/360); o1.w() = std::cos(90*M_PI/360);
+    o2.x() = 0; o2.y() = std::sin(-90*M_PI/360); o2.z() = 0; o2.w() = std::cos(-90*M_PI/360);
+    o3.x() = 0; o3.y() = 0; o3.z() = std::sin(20*M_PI/360); o3.w() = std::cos(20*M_PI/360);
+    q.orientation = o3*o2*o1;
 
-            camera.setCameraPose(cameraPose(6,theta*M_PI/180,phi*M_PI/180));
-            renderer.clearWindow();
-            cube.renderObject(camera,renderer);
-            renderer.show();
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-    }
+    double T=5, t=0, frame_rate=60;
+    int frame=1;
+    std::string file_name;
+    while(t<=T)
+    {
+        file_name = "C:/Users/nived/Desktop/cpp/dev/sdl_demo_renders/render1/image";
+        for(int i=0;i<5-numDigits(frame);i++){file_name+="0";}
+        file_name += (std::to_string(frame) + ".png");
+        frame++;
+        std::cout<<file_name<<"\n";
+        cube.setWorldPose(interpolatePose(p,q,t/T));
 
+        double theta=30, phi=0;
+        camera.setCameraPose(cameraPose(8,theta*M_PI/180,phi*M_PI/180));
+        cube.renderObject(camera,renderer);
+        renderer.saveImage(file_name);
+        renderer.show();
+        renderer.clearWindow();
+        t+=(1/frame_rate);
+    } 
+    std::cout<<"Saved all frames ...\n";
 }
-
-
-
-
-
-
-// Renderer renderer;
-//     Camera camera(300,300,320,240);
-//     Pose p;
-//     p.position(0) = 0.5;
-//     p.position(1) = 0.5;
-//     p.position(2) = 0;
-//     p.orientation.x() = 0;
-//     p.orientation.y() = std::sin(45*M_PI/180);
-//     p.orientation.z() = 0;
-//     p.orientation.w() = std::cos(45*M_PI/180);
-//     Square square(p,1);
-
-//     Pose q;
-//     q.position(0) = 4;
-//     q.position(1) = 0;
-//     q.position(2) = 0;
-//     q.orientation.x() = -0.5;
-//     q.orientation.y() = -0.5;
-//     q.orientation.z() = 0.5;
-//     q.orientation.w() = 0.5;
-//     camera.setCameraPose(q);
-
-//     square.setFillColor(0,255,255,255);
-//     square.setEdgeColor(0,0,0,255);
-//     square.setBorderWidth(3);
-//     square.renderObject(camera,renderer);
-
-//     renderer.show();
-//     int x;
-//     std::cin >> x;
