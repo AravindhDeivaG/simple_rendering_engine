@@ -35,7 +35,29 @@ Pose cameraPose(double r, double theta, double phi)
 }
 
 
-Pose interpolatePose(Pose p, Pose q, double t)
+Eigen::Vector3d quaternion2RPY(Eigen::Quaterniond q)
+{
+    Eigen::Vector3d v1,v2;
+    v1 = q.toRotationMatrix().eulerAngles(2,1,0);
+    v2(0) = v1(2);
+    v2(1) = v1(1);
+    v2(2) = v1(0);
+    return v2;
+}
+
+Eigen::Quaterniond rpy2Quaternion(Eigen::Vector3d rpy)
+{
+
+    Eigen::AngleAxisd rollAngle(rpy(0),   Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd pitchAngle(rpy(1), Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd yawAngle(rpy(2),     Eigen::Vector3d::UnitZ());
+
+    Eigen::Quaterniond q =yawAngle * pitchAngle * rollAngle;
+    return q;
+}
+
+
+Pose interpolatePoseSmooth(Pose p, Pose q, double t)
 {
     Pose out;
 
@@ -49,6 +71,25 @@ Pose interpolatePose(Pose p, Pose q, double t)
 
     return out;
 }
+
+Pose interpolatePoseRough(Pose p, Pose q, double t)
+{
+    Pose out;
+
+    // Perform linear interpolation of position
+    out.position = p.position*(1-t) + q.position*t;
+
+    // Perform lerp in rpy
+    Eigen::Vector3d p_rpy, q_rpy, pq_rpy;
+    p_rpy = quaternion2RPY(p.orientation);
+    q_rpy = quaternion2RPY(q.orientation);
+
+    pq_rpy = p_rpy*(1-t) + q_rpy*t;
+    out.orientation = rpy2Quaternion(pq_rpy);
+    return out;
+}
+
+
 
 
 int numDigits(int num)
@@ -91,17 +132,33 @@ int main()
     o3.x() = 0; o3.y() = 0; o3.z() = std::sin(20*M_PI/360); o3.w() = std::cos(20*M_PI/360);
     q.orientation = o3*o2*o1;
 
-    double T=5, t=0, frame_rate=60;
+    std::cout<<"Original orientation : "<<q.orientation<<"\n";
+    std::cout<<"Original orientation : "<<rpy2Quaternion(quaternion2RPY(q.orientation))<<"\n";
+
+    double T=5, delay_start=0.5, delay_end = 1, frame_rate=60;
+    double t=0;
     int frame=1;
     std::string file_name;
-    while(t<=T)
+    while(t<=T+delay_start+delay_end)
     {
-        file_name = "C:/Users/nived/Desktop/cpp/dev/sdl_demo_renders/render1/image";
-        for(int i=0;i<5-numDigits(frame);i++){file_name+="0";}
+        if(t<=delay_start)
+        {
+            cube.setWorldPose(interpolatePoseRough(p,q,0));
+        }
+        else if(t>=delay_start && t<=delay_start+T)
+        {
+            cube.setWorldPose(interpolatePoseRough(p,q,(t-delay_start)/T));
+        }
+        else
+        {
+            cube.setWorldPose(interpolatePoseRough(p,q,1));
+
+        }
+        file_name = "C:/Users/nived/Desktop/cpp/dev/sdl_demo_renders/render2/image";
+        for(int i=0;i<4-numDigits(frame);i++){file_name+="0";}
         file_name += (std::to_string(frame) + ".png");
         frame++;
         std::cout<<file_name<<"\n";
-        cube.setWorldPose(interpolatePose(p,q,t/T));
 
         double theta=30, phi=0;
         camera.setCameraPose(cameraPose(8,theta*M_PI/180,phi*M_PI/180));

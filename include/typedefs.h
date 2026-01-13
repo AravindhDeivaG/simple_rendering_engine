@@ -3,6 +3,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <vector>
 
 using Vector = Eigen::Vector3d;
