@@ -1,5 +1,6 @@
 #include "square.h"
 #include "rubiks_cube.h"
+#include "locus.h"
 #include <chrono>
 #include <thread>
 #include <iostream>
@@ -106,8 +107,8 @@ int numDigits(int num)
 
 int main()
 {
-    Renderer renderer;
-    Camera camera(300,300,320,240);
+    Renderer renderer(400,400);
+    Camera camera(300,300,200,200);
 
     RubiksCube cube;
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -118,51 +119,71 @@ int main()
     p.position.setZero();
     
     p.orientation.setIdentity();
-    p.position(1) = -4;
-    o1.x() = 0; o1.y() = 0; o1.z() = std::sin(-20*M_PI/360); o1.w() = std::cos(-20*M_PI/360);
+    p.position(1) = 0;
+    o1.x() = 0; o1.y() = 0; o1.z() = std::sin(-45*M_PI/360); o1.w() = std::cos(-45*M_PI/360);
     p.orientation = o1;
 
     Pose q;
     q.position.setZero();
-    q.position(1) = 4;
+    q.position(1) = 0;
     o1.setIdentity();
     o2.setIdentity();
-    o1.x() = 0; o1.y() = 0; o1.z() = std::sin(90*M_PI/360); o1.w() = std::cos(90*M_PI/360);
-    o2.x() = 0; o2.y() = std::sin(-90*M_PI/360); o2.z() = 0; o2.w() = std::cos(-90*M_PI/360);
-    o3.x() = 0; o3.y() = 0; o3.z() = std::sin(20*M_PI/360); o3.w() = std::cos(20*M_PI/360);
-    q.orientation = o3*o2*o1;
+    o1.x() = 0; o1.y() = 0; o1.z() = std::sin(0*M_PI/360); o1.w() = std::cos(0*M_PI/360);
+    o2.x() = 0; o2.y() = std::sin(180*M_PI/360); o2.z() = 0; o2.w() = std::cos(180*M_PI/360);
+    o3.x() = 0; o3.y() = 0; o3.z() = std::sin(-135*M_PI/360); o3.w() = std::cos(-135*M_PI/360);
+    q.orientation = (o3*o2*o1).coeffs()*-1;
 
     std::cout<<"Original orientation : "<<q.orientation<<"\n";
     std::cout<<"Original orientation : "<<rpy2Quaternion(quaternion2RPY(q.orientation))<<"\n";
 
-    double T=5, delay_start=0.5, delay_end = 1, frame_rate=60;
+    double T=5, delay_start=0.5, delay_end = 2, frame_rate=60;
     double t=0;
     int frame=1;
     std::string file_name;
+    Pose cube_pose;
+
+    // Tracked point on the cube
+    Vector point = {1.5,-1.5,1.5};
+
+    // Locus object to track
+    Locus locus;
+    locus.setColor(Color({30,30,30,255}));
+
     while(t<=T+delay_start+delay_end)
     {
         if(t<=delay_start)
         {
-            cube.setWorldPose(interpolatePoseRough(p,q,0));
+            cube_pose = interpolatePoseRough(p,q,0);
+            // cube_pose = interpolatePoseSmooth(p,q,0);
         }
         else if(t>=delay_start && t<=delay_start+T)
         {
-            cube.setWorldPose(interpolatePoseRough(p,q,(t-delay_start)/T));
+            cube_pose = interpolatePoseRough(p,q,(t-delay_start)/T);
+            // cube_pose = interpolatePoseSmooth(p,q,(t-delay_start)/T);
+            locus.addPoint(
+                cube_pose.orientation.toRotationMatrix()*point + cube_pose.position
+            );
         }
         else
         {
-            cube.setWorldPose(interpolatePoseRough(p,q,1));
+            cube_pose = interpolatePoseRough(p,q,1);
+            // cube_pose = interpolatePoseSmooth(p,q,1);
 
         }
-        file_name = "C:/Users/nived/Desktop/cpp/dev/sdl_demo_renders/render2/image";
+        cube.setWorldPose(cube_pose);
+        file_name = "C:/Users/nived/Desktop/cpp/dev/sdl_demo_renders/render3/image";
         for(int i=0;i<4-numDigits(frame);i++){file_name+="0";}
         file_name += (std::to_string(frame) + ".png");
         frame++;
         std::cout<<file_name<<"\n";
 
         double theta=30, phi=0;
-        camera.setCameraPose(cameraPose(8,theta*M_PI/180,phi*M_PI/180));
+        camera.setCameraPose(cameraPose(6,theta*M_PI/180,phi*M_PI/180));
         cube.renderObject(camera,renderer);
+        if(t>=delay_start)
+        {
+            locus.renderObject(camera,renderer,5);
+        }
         renderer.saveImage(file_name);
         renderer.show();
         renderer.clearWindow();

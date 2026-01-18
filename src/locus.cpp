@@ -50,28 +50,38 @@ void Locus::renderObject(Camera& camera, Renderer& renderer, int line_width)
 
     // Project points to camera frame
     pixels_ = camera.projectToCamera(world_points);
+    // std::cout<<"Pixel points : \n"<<pixels_<<"\n";
 
     // Calculate slope of all line segments in the pixels
+    slopes_.clear();
     calculateSlopes_();
-    
+    // std::cout<<"Calculate slopes over\n";
+
     // Construct rectangles of thickness 2 pixels for all line segments
     line_width_ = line_width;
     renderRectangles_(renderer);
+    // std::cout<<"render Rectangles over\n";
 
     // Fill triangular cracks
     fillTriangularCracks_(renderer);
+    // std::cout<<"Fill triangular cracks over\n";
+
 }
 
 
 
 void Locus::calculateSlopes_()
 {
-    for(int i=0;i<pixels_.cols()-1;i++)
+    for(int i=0;i<int(pixels_.cols()-1);i++)
     {
         Eigen::Vector2d slope;
         slope = pixels_.block(0,i+1,2,1)-pixels_.block(0,i,2,1);
-        slope = slope/slope.norm();
+        if(slope.norm()!=0)
+        {
+            slope = slope/slope.norm(); 
+        }
         slopes_.emplace_back(slope); 
+    // std::cout<<"Slopes size : "<<slopes_.size()-1<<"\n";
     }
 }
 
@@ -81,7 +91,7 @@ void Locus::renderRectangles_(Renderer& renderer)
     Eigen::Matrix<double,2,-1> triangle_pixels;
     triangle_pixels.resize(2,3);
     Eigen::Vector2d slope_per_;
-    for(int i=0;i<pixels_.cols()-1;i++)
+    for(int i=0;i<int(pixels_.cols()-1);i++)
     {
         // Render two separate triangles to render the rectangle
 
@@ -108,7 +118,7 @@ void Locus::fillTriangularCracks_(Renderer& renderer)
     Eigen::Matrix<double,2,-1> triangle_pixels;
     triangle_pixels.resize(2,3);
     Eigen::Vector2d slope_per1_, slope_per2_;
-    for(int i=0;i<slopes_.size()-1;i++)
+    for(int i=0;i<int(slopes_.size()-1);i++)
     {
         slope_per1_[0] = -1*slopes_[i](1);
         slope_per1_[1] = slopes_[i](0);
