@@ -12,6 +12,7 @@ add_library(RenderLib
     src/square.cpp
     src/camera.cpp
     src/renderer.cpp
+    src/locus.cpp
     src/rubiks_cube.cpp)
 target_include_directories(RenderLib
     PUBLIC
@@ -26,14 +27,7 @@ target_link_directories(RenderLib
 )
 target_link_libraries(RenderLib PRIVATE SDL3)
 
-add_executable(test bin/test.cpp)
-target_link_libraries(test PRIVATE RenderLib)
 
-add_custom_command(TARGET test POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/bin/SDL3.dll
-        $<TARGET_FILE_DIR:test>
-)
 
 #####################################################
 
@@ -57,4 +51,25 @@ add_custom_command(TARGET sdl_demo POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/bin/SDL3.dll
         $<TARGET_FILE_DIR:sdl_demo>
+)
+
+
+#################################################################################
+
+add_executable(test bin/test.cpp)
+target_link_libraries(test PRIVATE RenderLib)
+
+add_custom_command(TARGET test POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/bin/SDL3.dll
+        $<TARGET_FILE_DIR:test>
+)
+
+add_executable(locus bin/test_locus.cpp)
+target_link_libraries(locus PRIVATE RenderLib)
+
+add_custom_command(TARGET locus POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        C:/Users/nived/Desktop/cpp/usr/libraries/SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32/bin/SDL3.dll
+        $<TARGET_FILE_DIR:test>
 )
